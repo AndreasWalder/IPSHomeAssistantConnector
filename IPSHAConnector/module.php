@@ -16,6 +16,7 @@ class HAConnector extends IPSModule
         parent::ApplyChanges();
     }
 
+    // ---- Public convenience ----
     public function CallService(string $domain, string $service, array $payload)
     {
         $url = rtrim($this->ReadPropertyString('BaseUrl'), '/') . "/api/services/{$domain}/{$service}";
@@ -50,6 +51,7 @@ class HAConnector extends IPSModule
         return $this->TurnOn($entity, $pct, null);
     }
 
+    // ---- Actions for form buttons ----
     public function TestTurnOn()
     {
         $entity = $this->ReadPropertyString('DefaultEntity');
@@ -80,6 +82,7 @@ class HAConnector extends IPSModule
         return $this->SetPercent($entity, 50);
     }
 
+    // ---- Helpers ----
     private function resolveEntity(string $entity): string
     {
         if ($entity !== '') {
@@ -95,7 +98,7 @@ class HAConnector extends IPSModule
     private function pctToBrightness(int $pct): int
     {
         $raw = (int)round(max(0, min(100, $pct)) * 2.55);
-        return max(13, min(255, $raw));
+        return max(13, min(255, $raw)); // kleine Untergrenze für robuste Treiber
     }
 
     private function doPost(string $url, array $payload)
@@ -111,6 +114,7 @@ class HAConnector extends IPSModule
             throw new Exception('JSON encoding failed');
         }
 
+        // Symcon HTTP
         $options = [
             'Timeout' => (int)5000,
             'Headers' => array_map('strval', [
@@ -132,6 +136,7 @@ class HAConnector extends IPSModule
             return $result;
         }
 
+        // cURL-Fallback (falls Symcon-Optionsformat abgelehnt wird)
         if (function_exists('curl_init')) {
             $ch = curl_init($url);
             curl_setopt_array($ch, [
@@ -159,4 +164,4 @@ class HAConnector extends IPSModule
 
         throw new Exception('HTTP request failed');
     }
-?>
+}
