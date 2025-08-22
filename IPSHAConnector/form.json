@@ -5,9 +5,9 @@
     { "type": "ValidationTextBox", "name": "DefaultEntity", "caption": "Default Entity (optional)", "enabled": true }
   ],
   "actions": [
-    { "type": "Label", "caption": "Testaufrufe (Default Entity)" },
-    { "type": "Button", "caption": "Turn On (100%)", "onClick": "HAC_TestTurnOn();" },
-    { "type": "Button", "caption": "Turn Off",       "onClick": "HAC_TestTurnOff();" },
-    { "type": "Button", "caption": "Dim 50%",        "onClick": "HAC_TestDim50();" }
+  { "type": "Label", "caption": "Testaufrufe (Default Entity)" },
+  { "type": "Button", "caption": "Turn On (100%)", "onClick": "HAC_TestTurnOn($id);" },
+  { "type": "Button", "caption": "Turn Off",       "onClick": "HAC_TestTurnOff($id);" },
+  { "type": "Button", "caption": "Dim 50%",        "onClick": "HAC_TestDim50($id);" }
   ]
 }
