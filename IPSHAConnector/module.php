@@ -100,33 +100,63 @@ class HAConnector extends IPSModule
 
     private function doPost(string $url, array $payload)
     {
-        $token = $this->ReadPropertyString('Token');
+        $token = trim($this->ReadPropertyString('Token'));
         if ($token === '') {
             throw new Exception('Token is empty');
         }
 
         $body = json_encode($payload, JSON_UNESCAPED_SLASHES);
+        if (!is_string($body)) {
+            $this->SendDebug('HA JSON ERROR', json_last_error_msg(), 0);
+            throw new Exception('JSON encoding failed');
+        }
 
         $options = [
-            'Timeout' => 5000,
-            'Headers' => [
+            'Timeout' => (int)5000,
+            'Headers' => array_map('strval', [
                 'Authorization: Bearer ' . $token,
                 'Content-Type: application/json'
-            ],
+            ]),
             'Method'  => 'POST',
-            'Body'    => $body
+            'Body'    => (string)$body
         ];
 
-        $this->SendDebug('HA POST', $url, 0);
-        $this->SendDebug('HA Body', $body, 0);
+        $this->SendDebug('HA POST URL', $url, 0);
+        $this->SendDebug('HA POST Body', $body, 0);
+        $this->SendDebug('HA Options Type', gettype($options), 0);
+        $this->SendDebug('HA Headers Type', gettype($options['Headers']), 0);
+        $this->SendDebug('HA Body Type', gettype($options['Body']), 0);
 
-        $result = Sys_GetURLContentEx($url, $options);
-        if ($result === false || $result === null) {
-            $err = print_r(error_get_last(), true);
-            $this->SendDebug('HA Error', $err, 0);
-            throw new Exception('HTTP request failed');
+        $result = @Sys_GetURLContentEx($url, $options);
+        if ($result !== false && $result !== null) {
+            return $result;
         }
-        return $result;
+
+        if (function_exists('curl_init')) {
+            $ch = curl_init($url);
+            curl_setopt_array($ch, [
+                CURLOPT_POST           => true,
+                CURLOPT_POSTFIELDS     => $body,
+                CURLOPT_HTTPHEADER     => [
+                    'Authorization: Bearer ' . $token,
+                    'Content-Type: application/json'
+                ],
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_CONNECTTIMEOUT => 3,
+                CURLOPT_TIMEOUT        => 5
+            ]);
+            $resp = curl_exec($ch);
+            $err  = curl_error($ch);
+            $code = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            $this->SendDebug('HA cURL Code', (string)$code, 0);
+            if ($code >= 200 && $code < 300 && $resp !== false) {
+                return $resp;
+            }
+            $this->SendDebug('HA cURL Error', $err, 0);
+        }
+
+        throw new Exception('HTTP request failed');
     }
-}
 ?>
