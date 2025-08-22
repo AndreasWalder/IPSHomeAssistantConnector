@@ -22,26 +22,30 @@ class HAConnector extends IPSModule
         $url = rtrim($this->ReadPropertyString('BaseUrl'), '/') . "/api/services/{$domain}/{$service}";
         return $this->doPost($url, $payload);
     }
-
-    public function TurnOn(string $entity = '', ?int $brightnessPct = null, ?float $transition = null)
+    
+    public function TurnOn(?int $brightnessPct = null, ?float $transition = null, string $entity = '')
     {
         $entity = $this->resolveEntity($entity);
+    
         $payload = ['entity_id' => $entity];
+    
         if ($brightnessPct !== null) {
             $payload['brightness'] = $this->pctToBrightness($brightnessPct);
         }
+    
         if ($transition !== null) {
             $payload['transition'] = $transition;
         }
+    
         return $this->CallService('light', 'turn_on', $payload);
     }
-
+    
     public function TurnOff(string $entity = '')
     {
         $entity = $this->resolveEntity($entity);
         return $this->CallService('light', 'turn_off', ['entity_id' => $entity]);
     }
-
+    
     public function SetPercent(string $entity, int $pct)
     {
         $pct = max(0, min(100, $pct));
